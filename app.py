@@ -15,119 +15,154 @@ st.set_page_config(
 )
 
 st.title("🛠️ API Integration Copilot")
-st.write("A Smart DevTool that helps developers understand and integrate APIs faster.")
+st.caption("Smart DevTool for faster API understanding, RAG-based Q&A, and Python wrapper generation.")
 
-docs_url = st.text_input("Enter API Documentation URL")
+with st.sidebar:
+    st.header("Project Controls")
 
-use_case = st.text_area(
-    "Describe your use case",
-    placeholder="Example: I want to integrate payment checkout into my Python backend."
-)
+    docs_url = st.text_input(
+        "API Documentation URL",
+        placeholder="https://docs.github.com/en/rest"
+    )
 
-language = st.selectbox(
-    "Preferred Programming Language",
-    ["Python"]
-)
+    max_pages = st.slider(
+        "Pages to crawl",
+        min_value=1,
+        max_value=15,
+        value=5
+    )
 
-st.divider()
+    language = st.selectbox(
+        "Preferred Language",
+        ["Python"]
+    )
 
-if st.button("Scrape & Store Documentation"):
-    if not docs_url:
-        st.error("Please enter a documentation URL.")
-    else:
-        with st.spinner("Scraping and storing documentation..."):
-            try:
-                docs_text = scrape_api_docs(docs_url, max_pages=5)
+    use_case = st.text_area(
+        "Use Case",
+        placeholder="I want to build a Python tool that creates GitHub issues and reads repository information."
+    )
 
-                os.makedirs("data", exist_ok=True)
+    st.info("Step 1: Scrape docs\n\nStep 2: Ask questions\n\nStep 3: Analyze API\n\nStep 4: Generate wrapper")
 
-                with open("data/scraped_docs.txt", "w", encoding="utf-8") as f:
-                    f.write(docs_text)
+tab1, tab2, tab3, tab4 = st.tabs([
+    "📄 Scrape Docs",
+    "💬 Ask Docs",
+    "🔍 API Analysis",
+    "🐍 Code Generator"
+])
 
-                chunks = split_text_into_chunks(docs_text)
+with tab1:
+    st.subheader("Scrape and Store API Documentation")
 
-                vector_store = VectorStore()
-                vector_store.add_documents(chunks)
+    if st.button("Scrape & Store Documentation", use_container_width=True):
+        if not docs_url:
+            st.error("Please enter a documentation URL.")
+        else:
+            with st.spinner("Scraping, chunking, and storing documentation..."):
+                try:
+                    docs_text = scrape_api_docs(docs_url, max_pages=max_pages)
 
-                st.success("Documentation scraped, chunked, and stored successfully!")
+                    os.makedirs("data", exist_ok=True)
 
-                st.write(f"Total characters scraped: {len(docs_text)}")
-                st.write(f"Total chunks created: {len(chunks)}")
+                    with open("data/scraped_docs.txt", "w", encoding="utf-8") as f:
+                        f.write(docs_text)
 
-                st.subheader("Preview")
-                st.text_area("Scraped Content", docs_text[:5000], height=300)
+                    chunks = split_text_into_chunks(docs_text)
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+                    vector_store = VectorStore()
+                    vector_store.add_documents(chunks)
 
-st.divider()
+                    st.success("Documentation scraped and stored successfully!")
 
-st.subheader("Ask Questions About the API Docs")
+                    col1, col2, col3 = st.columns(3)
 
-question = st.text_input(
-    "Ask a question",
-    placeholder="Example: How do I authenticate requests?"
-)
+                    col1.metric("Characters Scraped", len(docs_text))
+                    col2.metric("Chunks Created", len(chunks))
+                    col3.metric("Pages Crawled", max_pages)
 
-if st.button("Ask AI"):
-    if not question:
-        st.error("Please enter a question.")
-    else:
-        with st.spinner("Searching docs and generating answer..."):
-            try:
-                answer = answer_question_from_docs(question)
-                st.success("Answer generated!")
-                st.write(answer)
+                    st.subheader("Documentation Preview")
+                    st.text_area(
+                        "Scraped Content Preview",
+                        docs_text[:5000],
+                        height=350
+                    )
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-st.divider()
+with tab2:
+    st.subheader("Ask Questions About API Documentation")
 
-st.subheader("API Integration Analyzer")
+    question = st.text_input(
+        "Your Question",
+        placeholder="How do I authenticate requests?"
+    )
 
-if st.button("Analyze API Documentation"):
-    if not use_case:
-        st.error("Please describe your use case first.")
-    else:
-        with st.spinner("Analyzing API documentation..."):
-            try:
-                analysis = analyze_api_docs(use_case)
-                st.success("API analysis completed!")
-                st.markdown(analysis)
+    if st.button("Ask AI", use_container_width=True):
+        if not question:
+            st.error("Please enter a question.")
+        else:
+            with st.spinner("Retrieving relevant docs and generating answer..."):
+                try:
+                    result = answer_question_from_docs(question)
+                    st.success("Answer generated!")
+                    st.markdown(result["answer"])
+                    with st.expander("View retrieved documentation chunks"):
+                        with st.expander("View retrieved documentation chunks"):
+                            st.markdown(f"### Source Chunk {i}")
+                            st.write(chunk[:1000])
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-st.divider()
+with tab3:
+    st.subheader("API Integration Analysis")
 
-st.subheader("Python Wrapper Code Generator")
+    st.write("This analyzes authentication, endpoints, request format, and integration approach.")
 
-if st.button("Generate Python Wrapper"):
-    if not use_case:
-        st.error("Please describe your use case first.")
-    else:
-        with st.spinner("Generating Python wrapper code..."):
-            try:
-                wrapper_code = generate_python_wrapper(use_case)
+    if st.button("Analyze API Documentation", use_container_width=True):
+        if not use_case:
+            st.error("Please describe your use case first.")
+        else:
+            with st.spinner("Analyzing API documentation..."):
+                try:
+                    analysis = analyze_api_docs(use_case)
+                    st.success("API analysis completed!")
 
-                os.makedirs("generated", exist_ok=True)
+                    st.markdown(analysis)
 
-                with open("generated/api_wrapper.py", "w", encoding="utf-8") as f:
-                    f.write(wrapper_code)
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-                st.success("Python wrapper generated successfully!")
+with tab4:
+    st.subheader("Python Wrapper Code Generator")
 
-                st.code(wrapper_code, language="python")
+    st.write("Generate a ready-to-use Python wrapper class based on the documentation and your use case.")
 
-                st.download_button(
-                    label="Download api_wrapper.py",
-                    data=wrapper_code,
-                    file_name="api_wrapper.py",
-                    mime="text/x-python"
-                )
+    if st.button("Generate Python Wrapper", use_container_width=True):
+        if not use_case:
+            st.error("Please describe your use case first.")
+        else:
+            with st.spinner("Generating Python wrapper code..."):
+                try:
+                    wrapper_code = generate_python_wrapper(use_case)
 
-            except Exception as e:
-                st.error(f"Error: {e}")
+                    os.makedirs("generated", exist_ok=True)
 
+                    with open("generated/api_wrapper.py", "w", encoding="utf-8") as f:
+                        f.write(wrapper_code)
 
+                    st.success("Python wrapper generated successfully!")
+
+                    st.code(wrapper_code, language="python")
+
+                    st.download_button(
+                        label="Download api_wrapper.py",
+                        data=wrapper_code,
+                        file_name="api_wrapper.py",
+                        mime="text/x-python",
+                        use_container_width=True
+                    )
+
+                except Exception as e:
+                    st.error(f"Error: {e}")
