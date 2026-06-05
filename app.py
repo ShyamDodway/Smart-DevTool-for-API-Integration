@@ -5,6 +5,7 @@ from src.scraper import scrape_api_docs
 from src.text_splitter import split_text_into_chunks
 from src.vector_store import VectorStore
 from src.rag_chain import answer_question_from_docs
+from src.analyzer import analyze_api_docs
 
 st.set_page_config(
     page_title="API Integration Copilot",
@@ -76,6 +77,23 @@ if st.button("Ask AI"):
                 answer = answer_question_from_docs(question)
                 st.success("Answer generated!")
                 st.write(answer)
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+st.divider()
+
+st.subheader("API Integration Analyzer")
+
+if st.button("Analyze API Documentation"):
+    if not use_case:
+        st.error("Please describe your use case first.")
+    else:
+        with st.spinner("Analyzing API documentation..."):
+            try:
+                analysis = analyze_api_docs(use_case)
+                st.success("API analysis completed!")
+                st.markdown(analysis)
 
             except Exception as e:
                 st.error(f"Error: {e}")
