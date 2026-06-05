@@ -4,6 +4,7 @@ import os
 from src.scraper import scrape_api_docs
 from src.text_splitter import split_text_into_chunks
 from src.vector_store import VectorStore
+from src.rag_chain import answer_question_from_docs
 
 st.set_page_config(
     page_title="API Integration Copilot",
@@ -25,6 +26,8 @@ language = st.selectbox(
     "Preferred Programming Language",
     ["Python"]
 )
+
+st.divider()
 
 if st.button("Scrape & Store Documentation"):
     if not docs_url:
@@ -50,7 +53,31 @@ if st.button("Scrape & Store Documentation"):
                 st.write(f"Total chunks created: {len(chunks)}")
 
                 st.subheader("Preview")
-                st.text_area("Scraped Content", docs_text[:5000], height=400)
+                st.text_area("Scraped Content", docs_text[:5000], height=300)
 
             except Exception as e:
                 st.error(f"Error: {e}")
+
+st.divider()
+
+st.subheader("Ask Questions About the API Docs")
+
+question = st.text_input(
+    "Ask a question",
+    placeholder="Example: How do I authenticate requests?"
+)
+
+if st.button("Ask AI"):
+    if not question:
+        st.error("Please enter a question.")
+    else:
+        with st.spinner("Searching docs and generating answer..."):
+            try:
+                answer = answer_question_from_docs(question)
+                st.success("Answer generated!")
+                st.write(answer)
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+                
