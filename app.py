@@ -37,7 +37,7 @@ if st.button("Scrape & Store Documentation"):
     else:
         with st.spinner("Scraping and storing documentation..."):
             try:
-                docs_text = scrape_api_docs(docs_url)
+                docs_text = scrape_api_docs(docs_url, max_pages=5)
 
                 os.makedirs("data", exist_ok=True)
 
@@ -131,4 +131,3 @@ if st.button("Generate Python Wrapper"):
                 st.error(f"Error: {e}")
 
 
-                
