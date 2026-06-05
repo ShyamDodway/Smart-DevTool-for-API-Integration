@@ -6,6 +6,7 @@ from src.text_splitter import split_text_into_chunks
 from src.vector_store import VectorStore
 from src.rag_chain import answer_question_from_docs
 from src.analyzer import analyze_api_docs
+from src.code_generator import generate_python_wrapper
 
 st.set_page_config(
     page_title="API Integration Copilot",
@@ -97,5 +98,37 @@ if st.button("Analyze API Documentation"):
 
             except Exception as e:
                 st.error(f"Error: {e}")
+
+st.divider()
+
+st.subheader("Python Wrapper Code Generator")
+
+if st.button("Generate Python Wrapper"):
+    if not use_case:
+        st.error("Please describe your use case first.")
+    else:
+        with st.spinner("Generating Python wrapper code..."):
+            try:
+                wrapper_code = generate_python_wrapper(use_case)
+
+                os.makedirs("generated", exist_ok=True)
+
+                with open("generated/api_wrapper.py", "w", encoding="utf-8") as f:
+                    f.write(wrapper_code)
+
+                st.success("Python wrapper generated successfully!")
+
+                st.code(wrapper_code, language="python")
+
+                st.download_button(
+                    label="Download api_wrapper.py",
+                    data=wrapper_code,
+                    file_name="api_wrapper.py",
+                    mime="text/x-python"
+                )
+
+            except Exception as e:
+                st.error(f"Error: {e}")
+
 
                 
