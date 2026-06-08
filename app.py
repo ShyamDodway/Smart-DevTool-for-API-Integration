@@ -22,7 +22,7 @@ with st.sidebar:
 
     docs_url = st.text_input(
         "API Documentation URL",
-        placeholder="https://docs.github.com/en/rest"
+        placeholder="https://jsonplaceholder.typicode.com/guide/"
     )
 
     max_pages = st.slider(
@@ -39,10 +39,15 @@ with st.sidebar:
 
     use_case = st.text_area(
         "Use Case",
-        placeholder="I want to build a Python tool that creates GitHub issues and reads repository information."
+        placeholder="I want to build a Python client that creates posts, reads posts, updates posts, and deletes posts."
     )
 
-    st.info("Step 1: Scrape docs\n\nStep 2: Ask questions\n\nStep 3: Analyze API\n\nStep 4: Generate wrapper")
+    st.info(
+        "Step 1: Scrape docs\n\n"
+        "Step 2: Ask questions\n\n"
+        "Step 3: Analyze API\n\n"
+        "Step 4: Generate wrapper"
+    )
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "📄 Scrape Docs",
@@ -62,6 +67,10 @@ with tab1:
                 try:
                     docs_text = scrape_api_docs(docs_url, max_pages=max_pages)
 
+                    if not docs_text.strip():
+                        st.error("No documentation text was scraped. Try another URL.")
+                        st.stop()
+
                     os.makedirs("data", exist_ok=True)
 
                     with open("data/scraped_docs.txt", "w", encoding="utf-8") as f:
@@ -69,8 +78,16 @@ with tab1:
 
                     chunks = split_text_into_chunks(docs_text)
 
+                    if not chunks:
+                        st.error("No chunks were created from the documentation.")
+                        st.stop()
+
                     vector_store = VectorStore()
                     vector_store.add_documents(chunks)
+
+                    st.session_state["docs_loaded"] = True
+                    st.session_state["last_docs_url"] = docs_url
+                    st.session_state["chunks_count"] = len(chunks)
 
                     st.success("Documentation scraped and stored successfully!")
 
@@ -93,24 +110,36 @@ with tab1:
 with tab2:
     st.subheader("Ask Questions About API Documentation")
 
+    if "docs_loaded" not in st.session_state:
+        st.warning("Please scrape and store documentation first.")
+
     question = st.text_input(
         "Your Question",
-        placeholder="How do I authenticate requests?"
+        placeholder="What endpoints are available?"
     )
 
     if st.button("Ask AI", use_container_width=True):
-        if not question:
+        if "docs_loaded" not in st.session_state:
+            st.error("Please scrape and store documentation before asking questions.")
+        elif not question:
             st.error("Please enter a question.")
         else:
             with st.spinner("Retrieving relevant docs and generating answer..."):
                 try:
                     result = answer_question_from_docs(question)
+
                     st.success("Answer generated!")
                     st.markdown(result["answer"])
+
+                    sources = result.get("sources", [])
+
                     with st.expander("View retrieved documentation chunks"):
-                        with st.expander("View retrieved documentation chunks"):
-                            st.markdown(f"### Source Chunk {i}")
-                            st.write(chunk[:1000])
+                        if not sources:
+                            st.warning("No source chunks were retrieved.")
+                        else:
+                            for i, chunk in enumerate(sources, start=1):
+                                st.markdown(f"### Source Chunk {i}")
+                                st.write(chunk[:1000])
 
                 except Exception as e:
                     st.error(f"Error: {e}")
@@ -120,15 +149,19 @@ with tab3:
 
     st.write("This analyzes authentication, endpoints, request format, and integration approach.")
 
+    if "docs_loaded" not in st.session_state:
+        st.warning("Please scrape and store documentation first.")
+
     if st.button("Analyze API Documentation", use_container_width=True):
-        if not use_case:
+        if "docs_loaded" not in st.session_state:
+            st.error("Please scrape and store documentation before analysis.")
+        elif not use_case:
             st.error("Please describe your use case first.")
         else:
             with st.spinner("Analyzing API documentation..."):
                 try:
                     analysis = analyze_api_docs(use_case)
                     st.success("API analysis completed!")
-
                     st.markdown(analysis)
 
                 except Exception as e:
@@ -139,8 +172,13 @@ with tab4:
 
     st.write("Generate a ready-to-use Python wrapper class based on the documentation and your use case.")
 
+    if "docs_loaded" not in st.session_state:
+        st.warning("Please scrape and store documentation first.")
+
     if st.button("Generate Python Wrapper", use_container_width=True):
-        if not use_case:
+        if "docs_loaded" not in st.session_state:
+            st.error("Please scrape and store documentation before generating wrapper.")
+        elif not use_case:
             st.error("Please describe your use case first.")
         else:
             with st.spinner("Generating Python wrapper code..."):
