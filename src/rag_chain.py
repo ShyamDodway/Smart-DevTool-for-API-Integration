@@ -44,4 +44,7 @@ Answer:
         "question": question
     })
 
-    return response.content
+    return {
+    "answer": response.content,
+    "sources": relevant_chunks
+}
