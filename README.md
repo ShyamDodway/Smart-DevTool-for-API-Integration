@@ -267,20 +267,9 @@ to create SDK-style client code.
 
 ---
 
-# Future Improvements
-
-* JavaScript SDK generation
-* OpenAPI specification export
-* Postman collection generation
-* Multi-language code generation
-* Authentication flow diagrams
-* Agentic API integration workflows
-
----
-
 # Hackathon Submission
 
-Repository contains:
+Repository contains:git
 
 * Source code
 * README
