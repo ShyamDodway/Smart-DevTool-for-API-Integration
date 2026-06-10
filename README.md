@@ -265,11 +265,12 @@ to create SDK-style client code.
 * How do I create a repository?
 * What authentication headers are required?
 
+
 ---
 
 # Hackathon Submission
 
-Repository contains:git
+Repository contains:
 
 * Source code
 * README
